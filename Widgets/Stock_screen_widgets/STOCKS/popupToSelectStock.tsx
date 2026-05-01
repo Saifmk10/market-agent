@@ -4,6 +4,7 @@ import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, setDoc } from "@react-native-firebase/firestore";
 import { useEffect, useRef, useState } from 'react';
 import { LOGO_DEV_PUBLIC_KEY } from '@env';
+import StockExpandedView from './stockExpandedView';
 
 const addStockToDb = async (pressed: any) => {
     const fireBaseUser = getAuth();
@@ -96,6 +97,11 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
     const [offset, setOffset] = useState(0);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [addedStockName, setAddedStockName] = useState<string | null>(null);
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [expandedStockSymbol, setExpandedStockSymbol] = useState<string | null>(null);
+    const [showExpandedView, setShowExpandedView] = useState(false);
 
     const handleAddStock = async (stock: any, displayName: string) => {
         await addStockToDb(stock);
@@ -107,13 +113,69 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
         }, 1800);
     };
 
+    const fetchSuggestions = async (query: string) => {
+        if (query.trim().length < 2) {
+            setSuggestions([]);
+            return;
+        }
+        setIsFetchingSuggestions(true);
+        try {
+            const URL = `https://stock-api.saifmk.online/search/${encodeURIComponent(query)}`;
+            const request = await fetch(URL);
+            const data = await request.json();
+            const results = data.fuzzyMatches?.map((match: any) => ({
+                symbol: match.symbol,
+                name: match.name,
+                score: match.score,
+            })) || [];
+            // Include the resolved top result with price at the top
+            if (data.resolvedTicker && data.stockName && data.stockPrice) {
+                const topResult = {
+                    symbol: data.resolvedTicker,
+                    name: data.stockName,
+                    price: data.stockPrice,
+                    isResolved: true,
+                };
+                const filtered = results.filter((r: any) => r.symbol !== data.resolvedTicker);
+                setSuggestions([topResult, ...filtered]);
+            } else {
+                setSuggestions(results);
+            }
+        } catch (error) {
+            console.log("Suggestion fetch error:", error);
+        } finally {
+            setIsFetchingSuggestions(false);
+        }
+    };
+
+    const handleSearchInput = (text: string) => {
+        setSearched(text);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        if (text.trim().length < 2) {
+            setSuggestions([]);
+            setIsSearched(false);
+            return;
+        }
+        setIsSearched(true);
+        debounceRef.current = setTimeout(() => {
+            fetchSuggestions(text);
+        }, 400);
+    };
+
+    // --- Open expanded view instead of directly adding stock ---
+    const handleSuggestionPress = (suggestion: any) => {
+        setExpandedStockSymbol(suggestion.symbol);
+        setShowExpandedView(true);
+    };
+
     const searchedStock = async (searched: string) => {
         console.log("USER SEARCHED FOR :", searched)
         setIsSearching(true)
+        setSuggestions([]);
         setSearchedStockName("")
         setSearchedStockPrice(null)
         try {
-            const URL = `https://stock-api.saifmk.website/search/${encodeURIComponent(searched)}`
+            const URL = `https://stock-api.saifmk.online/search/${encodeURIComponent(searched)}`
             const request = await fetch(URL)
             const data = await request.json()
             setSearchedStockName(data.stockName)
@@ -188,11 +250,11 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
                         {/* Search input */}
                         <View>
                             <TextInput
-                                placeholder="Enter Stock Name"
+                                placeholder="Search for Stock"
                                 placeholderTextColor="#ffffff"
                                 style={modalStyle.stockInputSearch}
                                 value={searched}
-                                onChangeText={setSearched}
+                                onChangeText={handleSearchInput}
                                 returnKeyType="search"
                                 onSubmitEditing={() => { searchedStock(searched); setIsSearched(true); }}
                             />
@@ -201,14 +263,37 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
                         {isSearched ? (
                             isSearching ? (
                                 <BouncingDots />
-                            ) : (
+                            ) : suggestions.length > 0 ? (
+                                <ScrollView style={modalStyle.suggestionsScrollView} contentContainerStyle={modalStyle.suggestionsContainer}>
+                                    {isFetchingSuggestions && <BouncingDots />}
+                                    {suggestions.map((item, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={modalStyle.suggestionItem}
+                                            onPress={() => handleSuggestionPress(item)}
+                                        >
+                                            <Image
+                                                source={{ uri: `https://img.logo.dev/name/${item.name}?token=${LOGO_DEV_PUBLIC_KEY}` }}
+                                                style={modalStyle.suggestionLogo}
+                                            />
+                                            <View style={modalStyle.suggestionInfo}>
+                                                <Text style={modalStyle.suggestionName} numberOfLines={1}>{item.name}</Text>
+                                                <Text style={modalStyle.suggestionSymbol}>{item.symbol}</Text>
+                                            </View>
+                                            {item.price && (
+                                                <Text style={modalStyle.suggestionPrice}>₹{item.price}</Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            ) : searchedStockName ? (
                             <View style={modalStyle.searchedStockDesign}>
-                                <TouchableOpacity style={modalStyle.stockNameAndPrice} onPress={() => handleAddStock(searchedStockName, searchedStockName)}>
+                                <TouchableOpacity style={modalStyle.stockNameAndPrice} onPress={() => { setExpandedStockSymbol(searchedStockName); setShowExpandedView(true); }}>
                                     <Text style={modalStyle.stockName}>{searchedStockName}: </Text>
                                     <Text style={modalStyle.stockPrice}>₹{searchedStockPrice}</Text>
                                 </TouchableOpacity>
                             </View>
-                            )
+                            ) : null
                         ) : (
                             <View style={{ width: '100%', alignItems: 'center' }}>
                                 {/* Tab buttons */}
@@ -237,7 +322,7 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
                                     <ScrollView style={modalStyle.scrollView} contentContainerStyle={modalStyle.stockListContainer}>
                                         {dataAsArray.map((stock, index) => (
                                             <View key={index}>
-                                                <TouchableOpacity style={modalStyle.stockNameAndPrice} onPress={() => handleAddStock(stock, stock.name)}>
+                                                <TouchableOpacity style={modalStyle.stockNameAndPrice} onPress={() => { setExpandedStockSymbol(stock.name); setShowExpandedView(true); }}>
                                                     <View>  
                                                         <Image source={{ uri: `https://img.logo.dev/name/${stock.name}?token=${LOGO_DEV_PUBLIC_KEY}` }} style={{ width: 30, height: 30 , borderRadius:10 }}/>
                                                         <Text style={modalStyle.stockName}>{stock.name}: </Text>
@@ -293,6 +378,18 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
                     </Text>
                 </View>
             ) : null}
+
+            {/* Stock Expanded View Modal */}
+            <StockExpandedView
+                visible={showExpandedView}
+                onClose={() => setShowExpandedView(false)}
+                stockSymbol={expandedStockSymbol || ''}
+                onStockAdded={() => {
+                    setShowExpandedView(false);
+                    onStockAdded?.();
+                    onClose();
+                }}
+            />
         </Modal>
     );
 };
@@ -391,10 +488,53 @@ const modalStyle = StyleSheet.create({
         borderRadius: 20,
         color: "#ffff",
         alignItems: "center",
+        paddingHorizontal: 15,
     },
     searchedStockDesign: {
         justifyContent: "flex-start",
         alignItems: "flex-start",
+    },
+    suggestionsScrollView: {
+        width: '100%',
+        maxHeight: 480,
+    },
+    suggestionsContainer: {
+        paddingHorizontal: 15,
+        paddingBottom: 10,
+    },
+    suggestionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#000000',
+        borderRadius: 15,
+        padding: 12,
+        marginVertical: 4,
+    },
+    suggestionLogo: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        marginRight: 12,
+    },
+    suggestionInfo: {
+        flex: 1,
+    },
+    suggestionName: {
+        color: '#ffffff',
+        fontFamily: 'Jura-Bold',
+        fontSize: 14,
+    },
+    suggestionSymbol: {
+        color: '#aaaaaa',
+        fontFamily: 'Jura-Bold',
+        fontSize: 12,
+        marginTop: 2,
+    },
+    suggestionPrice: {
+        color: colors.primary,
+        fontFamily: 'Jura-Bold',
+        fontSize: 15,
+        marginLeft: 8,
     },
     stockTypeNavigationParent: {
         justifyContent: "center",

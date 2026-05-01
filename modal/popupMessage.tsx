@@ -27,7 +27,7 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose , st
 
                     {/* this is the main rea */}
                     <View>
-                        <TextInput placeholder="Enter Stock Name" style={modalStyle.stockInputSearch}></TextInput>
+                        <TextInput placeholder="Search Stock Name" style={modalStyle.stockInputSearch}></TextInput>
                     </View>
 
                     {/*  */}

@@ -1,8 +1,9 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Modal, Image } from "react-native";
 import DeleteLogo from "../../../Assets/images/agents/stockAgent/deleteLogo";
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, collection, doc, addDoc, setDoc, getDocs, deleteDoc } from "@react-native-firebase/firestore";
 import { useEffect, useState } from "react";
+import { LOGO_DEV_PUBLIC_KEY } from '@env';
 
 import Popupmessage from "./addedStockDetailsPopUp";
 import { assets } from "../../../react-native.config";
@@ -154,11 +155,20 @@ const AddedStocksList = ({ refreshKey }: { refreshKey?: number }) => {
                     // rendering the added stocks with the details in a proper layout and also with the delete button for each stock
                         (   
                             !isLoading && stocks.map((items, index) => (
-                                <TouchableOpacity style={style.mainContainerParent} onPress={() => { setVisbilityStat(true); setStockName(items.stockName); setStockPrice(items.stockPrice); setStockAddedDate(items.addedDate); test(items.stockName, items.stockPrice); console.log("CLICKED FROM addedStocksList.tsx:", items) }}>
-                                    <View key={index} style={style.stockDetailsParentStyle}>
-                                        <Text style={style.stockName}>{items.stockName.slice(0, 8) + ".."}</Text>
-                                        <Text style={style.stockPrice}>{"₹"}{items.stockPrice}</Text>
-                                        <Text style={style.stockAddDate}>{items.addedDate.split(",")[0]}</Text>
+                                <TouchableOpacity key={index} style={style.mainContainerParent} onPress={() => { setVisbilityStat(true); setStockName(items.stockName); setStockPrice(items.stockPrice); setStockAddedDate(items.addedDate); test(items.stockName, items.stockPrice); console.log("CLICKED FROM addedStocksList.tsx:", items) }}>
+                                    <View style={style.stockDetailsParentStyle}>
+                                        <Image
+                                            source={{ uri: `https://img.logo.dev/name/${items.stockName}?token=${LOGO_DEV_PUBLIC_KEY}` }}
+                                            style={style.stockLogo}
+                                        />
+                                        <View style={style.stockInfoColumn}>
+                                            <Text style={style.stockName} numberOfLines={1}>{items.stockName}</Text>
+                                            <Text style={style.stockTicker}>{items.StockTicker}</Text>
+                                        </View>
+                                        <View style={style.stockPriceColumn}>
+                                            <Text style={style.stockPrice}>{"₹"}{items.stockPrice}</Text>
+                                            <Text style={style.stockAddDate}>{items.addedDate.split(",")[0]}</Text>
+                                        </View>
                                     </View>
                                     <TouchableOpacity style={style.deleteButtonStyle} onPress={() => { setStockToDelete(items.StockTicker); setStockNameToDelete(items.stockName); setDeleteInfoVisible(false); setConfirmDeleteVisible(true); }}>
                                         <DeleteLogo />
@@ -268,21 +278,39 @@ const style = StyleSheet.create({
 
     // style section for the stock price name and date container
     mainContainerParent: {
-        marginTop: 20,
+        marginTop: 12,
         display: "flex",
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center"
     },
     stockDetailsParentStyle: {
-        backgroundColor: "#D9D9D9",
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
         flexDirection: "row",
-        width: 280,
-        padding: 15,
-        borderRadius: 10,
+        flex: 1,
+        padding: 14,
+        borderRadius: 18,
         borderWidth: 1,
-        borderColor: "#5F48F5",
+        borderColor: "rgba(255, 255, 255, 0.15)",
         alignItems: "center",
+    },
+
+    stockLogo: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        marginRight: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    },
+
+    stockInfoColumn: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+
+    stockPriceColumn: {
+        alignItems: 'flex-end',
+        justifyContent: 'center',
     },
 
     emptyStockMessage:{
@@ -316,30 +344,36 @@ const style = StyleSheet.create({
     },
 
     stockName: {
-        flex: 1,
         fontFamily: "Jura-Bold",
-        fontSize: 13,
+        fontSize: 14,
+        color: "#ffffff",
+    },
+
+    stockTicker: {
+        fontFamily: "Jura-Bold",
+        fontSize: 11,
+        color: "#aaaaaa",
+        marginTop: 3,
     },
 
     stockPrice: {
-        flex: 1,
-        textAlign: "center",
         fontFamily: "Jura-Bold",
-        fontSize: 13,
+        fontSize: 15,
+        color: "#ffffff",
     },
 
     stockAddDate: {
-        flex: 1,
-        textAlign: "right",
         fontFamily: "Jura-Bold",
-        fontSize: 13,
+        fontSize: 11,
+        color: "#aaaaaa",
+        marginTop: 3,
     },
 
     deleteButtonStyle: {
         backgroundColor: "#f40b0bff",
-        padding: 5,
-        margin: 5,
-        borderRadius: 10,
+        padding: 8,
+        marginLeft: 8,
+        borderRadius: 12,
     },
 
     confirmOverlay: {
