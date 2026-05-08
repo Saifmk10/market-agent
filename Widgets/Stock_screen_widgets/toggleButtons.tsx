@@ -33,7 +33,7 @@ const ToggleButton = ({ checker, setCheckerTo }: { checker: any, setCheckerTo: a
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setCheckerTo("BOT")}>
-                <Text style={checker === "BOT"  ? loginSignupStyle.loginToggleButtonsHover : loginSignupStyle.loginToggleButtonsNoHover}>STOCK BOT</Text>
+                <Text style={checker === "BOT"  ? loginSignupStyle.loginToggleButtonsHover : loginSignupStyle.loginToggleButtonsNoHover}>LEARNING</Text>
             </TouchableOpacity>
         </View>
 

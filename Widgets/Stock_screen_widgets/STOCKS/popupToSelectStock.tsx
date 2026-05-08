@@ -233,11 +233,25 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
         }
     };
 
+
+    // calling the api every 2 sec to fetch latest stock price update
     useEffect(() => {
+        let interval: ReturnType<typeof setInterval> | null = null;
+
         if (visible) {
             setOffset(0);
-            fetchData(true, false, 0)
+            fetchData(true, false, 0);
+
+            interval = setInterval(() => {
+                fetchData(false, false, 0);
+            }, 2000);
         }
+
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
     }, [visible, activeTab])
 
     return (
@@ -281,7 +295,7 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
                                                 <Text style={modalStyle.suggestionSymbol}>{item.symbol}</Text>
                                             </View>
                                             {item.price && (
-                                                <Text style={modalStyle.suggestionPrice}>₹{item.price}</Text>
+                                                <Text style={modalStyle.suggestionPrice}>₹{Number(item.price).toLocaleString('en-IN')}</Text>
                                             )}
                                         </TouchableOpacity>
                                     ))}
@@ -290,7 +304,7 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
                             <View style={modalStyle.searchedStockDesign}>
                                 <TouchableOpacity style={modalStyle.stockNameAndPrice} onPress={() => { setExpandedStockSymbol(searchedStockName); setShowExpandedView(true); }}>
                                     <Text style={modalStyle.stockName}>{searchedStockName}: </Text>
-                                    <Text style={modalStyle.stockPrice}>₹{searchedStockPrice}</Text>
+                                    <Text style={modalStyle.stockPrice}>₹{searchedStockPrice != null ? Number(searchedStockPrice).toLocaleString('en-IN') : ''}</Text>
                                 </TouchableOpacity>
                             </View>
                             ) : null
@@ -329,7 +343,7 @@ const Popupmessage = ({ message, buttonText1, buttonText2, visible, onClose, onS
                                                     </View>
                                                     
                                                     <View style={modalStyle.stockPriceParent}>
-                                                        <Text style={modalStyle.stockPrice}>₹{stock.price}</Text>
+                                                        <Text style={modalStyle.stockPrice}>₹{Number(stock.price).toLocaleString('en-IN')}</Text>
                                                         <Text style={[modalStyle.currentStockPrice, { color: Number(String(stock.current).replace(/[^\d.-]/g, "")) > 0 ? "green" : "red" }]}>
                                                             {stock.current}
                                                         </Text>

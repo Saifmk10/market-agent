@@ -222,7 +222,7 @@ const StockExpandedView = ({ visible, onClose, stockSymbol, onStockAdded }: { vi
                                         <Text style={expandedStyle.sectionTitle}>Market Stats</Text>
                                         <View style={expandedStyle.detailRow}>
                                             <Text style={expandedStyle.detailLabel}>Market Cap</Text>
-                                            <Text style={expandedStyle.detailValue}>₹{(stockData.marketStats.marketCap / 10000000).toFixed(2)} Cr</Text>
+                                            <Text style={expandedStyle.detailValue}>{stockData.marketStats.marketCap != null ? `₹${(Number(stockData.marketStats.marketCap) / 10000000).toFixed(2)} Cr` : 'N/A'}</Text>
                                         </View>
                                         <View style={expandedStyle.detailRow}>
                                             <Text style={expandedStyle.detailLabel}>52W High</Text>
@@ -234,11 +234,11 @@ const StockExpandedView = ({ visible, onClose, stockSymbol, onStockAdded }: { vi
                                         </View>
                                         <View style={expandedStyle.detailRow}>
                                             <Text style={expandedStyle.detailLabel}>50 Day Avg</Text>
-                                            <Text style={expandedStyle.detailValue}>₹{stockData.marketStats.fiftyDayAverage?.toFixed(2)}</Text>
+                                            <Text style={expandedStyle.detailValue}>{stockData.marketStats.fiftyDayAverage != null ? `₹${Number(stockData.marketStats.fiftyDayAverage).toFixed(2)}` : 'N/A'}</Text>
                                         </View>
                                         <View style={expandedStyle.detailRow}>
                                             <Text style={expandedStyle.detailLabel}>200 Day Avg</Text>
-                                            <Text style={expandedStyle.detailValue}>₹{stockData.marketStats.twoHundredDayAverage?.toFixed(2)}</Text>
+                                            <Text style={expandedStyle.detailValue}>{stockData.marketStats.twoHundredDayAverage != null ? `₹${Number(stockData.marketStats.twoHundredDayAverage).toFixed(2)}` : 'N/A'}</Text>
                                         </View>
                                     </View>
                                 )}
@@ -264,15 +264,15 @@ const StockExpandedView = ({ visible, onClose, stockSymbol, onStockAdded }: { vi
                                         <Text style={expandedStyle.sectionTitle}>Valuation</Text>
                                         <View style={expandedStyle.detailRow}>
                                             <Text style={expandedStyle.detailLabel}>P/E (Trailing)</Text>
-                                            <Text style={expandedStyle.detailValue}>{stockData.valuation.trailingPE?.toFixed(2)}</Text>
+                                            <Text style={expandedStyle.detailValue}>{stockData.valuation.trailingPE != null ? Number(stockData.valuation.trailingPE).toFixed(2) : 'N/A'}</Text>
                                         </View>
                                         <View style={expandedStyle.detailRow}>
                                             <Text style={expandedStyle.detailLabel}>P/E (Forward)</Text>
-                                            <Text style={expandedStyle.detailValue}>{stockData.valuation.forwardPE?.toFixed(2)}</Text>
+                                            <Text style={expandedStyle.detailValue}>{stockData.valuation.forwardPE != null ? Number(stockData.valuation.forwardPE).toFixed(2) : 'N/A'}</Text>
                                         </View>
                                         <View style={expandedStyle.detailRow}>
                                             <Text style={expandedStyle.detailLabel}>Price/Book</Text>
-                                            <Text style={expandedStyle.detailValue}>{stockData.valuation.priceToBook?.toFixed(2)}</Text>
+                                            <Text style={expandedStyle.detailValue}>{stockData.valuation.priceToBook != null ? Number(stockData.valuation.priceToBook).toFixed(2) : 'N/A'}</Text>
                                         </View>
                                         <View style={expandedStyle.detailRow}>
                                             <Text style={expandedStyle.detailLabel}>EPS (Trailing)</Text>
