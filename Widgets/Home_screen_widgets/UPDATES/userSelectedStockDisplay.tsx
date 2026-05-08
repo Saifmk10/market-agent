@@ -10,6 +10,7 @@ import { getFirestore, collection, doc, addDoc, setDoc, getDocs, deleteDoc } fro
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LOGO_DEV_PUBLIC_KEY } from '@env';
 import  { AreaChart, BarChart, LineChart, PieChart , RadarChart , ChartShowcase ,GaugeChart , HorizontalBarChart}  from '../../../Assets/graphs';
+import StockExpandedView from '../../Stock_screen_widgets/STOCKS/stockExpandedView';
 
 const stockApiEndpoint = "https://stock-api.saifmk.online/stock/{stockname}"
 const STOCKS_CACHE_KEY = 'stocks_metadata_cache';
@@ -35,6 +36,8 @@ const UserSelectedStockDisplay = () => {
     const [deletedToast, setDeletedToast] = useState(false);
     const [deleteInfoVisible, setDeleteInfoVisible] = useState(false);
     const [infoVisible, setInfoVisible] = useState(false);
+    const [expandedVisible, setExpandedVisible] = useState(false);
+    const [selectedStockTicker, setSelectedStockTicker] = useState<string>('');
 
 
     const fireBaseUser = getAuth();
@@ -78,7 +81,7 @@ const UserSelectedStockDisplay = () => {
         try {
             const updated = await Promise.all(
                 metadata.map(async (stock) => {
-                    const res = await fetch(`https://stock-api.saifmk.online/stock/${stock.StockTicker}`);
+                    const res = await fetch(`https://stock-api.saifmk.online/search/${stock.StockTicker+".NS"}`);
                     const data = await res.json();
                     console.log(`PRICE FETCHED FOR ${stock.StockTicker}:`, data.stockPrice);
                     return { stockName: stock.stockName, StockTicker: stock.StockTicker, stockPrice: data.stockPrice };
@@ -164,7 +167,7 @@ const UserSelectedStockDisplay = () => {
                     <Text style={styles.emptyText}>No stocks added yet</Text>
                 ) : (
                     stockDetails.map((stock, index) => (
-                        <View style={styles.container} key={index}>
+                        <TouchableOpacity style={styles.container} key={index} activeOpacity={0.7} onPress={() => { setSelectedStockTicker(stock.StockTicker + '.NS'); setExpandedVisible(true); }}>
                             {/* Logo + Ticker */}
                             <View style={styles.cardTopRow}>
                                 <Image
@@ -189,7 +192,7 @@ const UserSelectedStockDisplay = () => {
                                 <View style={styles.liveDot} />
                                 <Text style={styles.liveText}>LIVE</Text>
                             </View>
-                        </View>
+                        </TouchableOpacity>
                     ))
                 )}
             </ScrollView>
@@ -200,6 +203,13 @@ const UserSelectedStockDisplay = () => {
                 {/* <HorizontalBarChart data={data} title="Bar Chart - Horizontal" colorScheme="ocean" /> */}
                 {/* <AreaChart/> */}
             </ScrollView>
+
+            {/* Stock Expanded View Popup */}
+            <StockExpandedView
+                visible={expandedVisible}
+                onClose={() => setExpandedVisible(false)}
+                stockSymbol={selectedStockTicker}
+            />
 
             
             
